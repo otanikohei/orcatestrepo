@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+    # **************************************************
+    # VPC
+    # **************************************************
+    VPC:
+        Type: AWS::EC2::VPC
+        Properties:
+            CidrBlock: 10.0.0.0/16
+            EnableDnsHostnames: true
+            EnableDnsSupport: true
+            InstanceTenancy: default
+            Tags:
+            - Key: Name
+              Value: orca-test-vpc
+    InternetGateway:
+        Type: AWS::EC2::InternetGateway
+        Properties:
+            Tags:
+            - Key: Name
+            Value: orca-test-igw
+    AttachGateway:
+        Type: AWS::EC2::VPCGatewayAttachment
+        Properties:
+            VpcId: !Ref VPC
+            InternetGatewayId: !Ref InternetGateway
+    PublicRouteTable:
+        Type: AWS::EC2::RouteTable
+        DependsOn: AttachGateway
+        Properties:
+            VpcId: !Ref VPC
+            Tags:
+            - Key: Name
+              Value: orca-test-PublicRoute
+    PublicRoute:
+        Type: AWS::EC2::Route
+        DependsOn: AttachGateway
+        Properties:
+            RouteTableId: !Ref PublicRouteTable
+            DestinationCidrBlock: 0.0.0.0/0
+        GatewayId: !Ref InternetGateway
+    PublicSubnetA:
+        Type: AWS::EC2::Subnet
+        DependsOn: AttachGateway
+        Properties:
+            AvailabilityZone: "ap-northeast-1a"
+            CidrBlock: 10.0.1.0/24
+            MapPublicIpOnLaunch: true
+            VpcId: !Ref VPC
+            Tags:
+            - Key: Name
+              Value: orca-PublicSubnet-a
+    PublicSubnetRouteTableAssociationA:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            SubnetId: !Ref PublicSubnetA
+            RouteTableId: !Ref PublicRouteTable
+    PublicSubnetC:
+        Type: AWS::EC2::Subnet
+        DependsOn: AttachGateway
+        Properties:
+            AvailabilityZone: "ap-northeast-1c"
+            CidrBlock: 10.0.2.0/24
+            MapPublicIpOnLaunch: false
+            VpcId: !Ref VPC
+            Tags:
+            - Key: Name
+              Value: orca-test-PublicSubnet-c
+    PublicSubnetRouteTableAssociationC:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            SubnetId: !Ref PublicSubnetC
+            RouteTableId: !Ref PublicRouteTable
+    SgWeb:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupName: orca-test-sg-web
+            GroupDescription: SecurityGroup for Web Server
+            VpcId: !Ref VPC
+            SecurityGroupEgress:
+            - IpProtocol: "TCP"
+              FromPort: 443
+              ToPort: 443
+              CidrIp: 0.0.0.0/0
+              Description: "https Outbound"
+

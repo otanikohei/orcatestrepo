@@ -46,7 +46,7 @@ Resources:
         Properties:
             AvailabilityZone: "ap-northeast-1a"
             CidrBlock: 10.0.1.0/24
-            MapPublicIpOnLaunch: false
+            MapPublicIpOnLaunch: true
             VpcId: !Ref VPC
             Tags:
             - Key: Name
@@ -62,7 +62,7 @@ Resources:
         Properties:
             AvailabilityZone: "ap-northeast-1c"
             CidrBlock: 10.0.2.0/24
-            MapPublicIpOnLaunch: false
+            MapPublicIpOnLaunch: true
             VpcId: !Ref VPC
             Tags:
             - Key: Name
@@ -78,6 +78,12 @@ Resources:
             GroupName: orca-test-sg-web
             GroupDescription: SecurityGroup for Web Server
             VpcId: !Ref VPC
+            SecurityGroupIngress:
+            - IpProtocol: "TCP"
+              FromPort: 3389
+              ToPort: 3389
+              CidrIp: 0.0.0.0/0
+              Description: "https Outbound"
             SecurityGroupEgress:
             - IpProtocol: "TCP"
               FromPort: 443

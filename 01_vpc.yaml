@@ -1,8 +1,19 @@
 AWSTemplateFormatVersion: '2010-09-09'
 
+Parameters:
+  AMI:
+    Description: AMI for Amazon Linux 2023
+    Type: String
+    Default: "ami-0b44ce1dad7c202b7" # AMI 2024/07
+
+  EC2InstanceType:
+    Description: Instance type of Arm Instance
+    Type: String 
+    Default: "t4g.nano"
+
 Resources:
     # **************************************************
-    # VPC
+    # VPC 2024/07/28
     # **************************************************
     VPC:
         Type: AWS::EC2::VPC
@@ -19,7 +30,7 @@ Resources:
         Properties:
             Tags:
             - Key: Name
-            Value: orca-test-igw
+              Value: orca-test-igw
     AttachGateway:
         Type: AWS::EC2::VPCGatewayAttachment
         Properties:
@@ -39,7 +50,7 @@ Resources:
         Properties:
             RouteTableId: !Ref PublicRouteTable
             DestinationCidrBlock: 0.0.0.0/0
-        GatewayId: !Ref InternetGateway
+            GatewayId: !Ref InternetGateway
     PublicSubnetA:
         Type: AWS::EC2::Subnet
         DependsOn: AttachGateway
@@ -80,14 +91,57 @@ Resources:
             VpcId: !Ref VPC
             SecurityGroupIngress:
             - IpProtocol: "TCP"
-              FromPort: 3389
-              ToPort: 3389
+              FromPort: 22
+              ToPort: 22
               CidrIp: 0.0.0.0/0
-              Description: "https Outbound"
+              Description: "ssh Outbound"
             SecurityGroupEgress:
             - IpProtocol: "TCP"
               FromPort: 443
               ToPort: 443
               CidrIp: 0.0.0.0/0
               Description: "https Outbound"
+
+    # # **************************************************
+    # # Elastic IP Address
+    # # **************************************************
+    ElasticIP:
+        Type: "AWS::EC2::EIP"
+        Properties:
+            Domain: !Ref VPC
+            Tags:
+            - Key: Name
+              Value: orca-test-ElaticIP
+
+    # # **************************************************
+    # # EC2
+    # # **************************************************
+    EC2Instance:
+        Type: AWS::EC2::Instance
+        Properties:
+            AvailabilityZone: "ap-northeast-1a"
+            CreditSpecification:
+                CPUCredits: "standard"
+            DisableApiTermination: false
+            # MapPublicIpOnLaunch: false
+            ImageId:
+                !Ref AMI
+            InstanceType:
+                !Ref EC2InstanceType
+            PrivateIpAddress:
+                "10.0.1.28"
+            SecurityGroupIds:
+                - !GetAtt [VPC, DefaultSecurityGroup]
+                - !Ref SgWeb
+            SubnetId: !Ref PublicSubnetA
+            Tags: 
+            - Key: "Name"
+              Value: "orca-test-ec2"
+            EbsOptimized: true
+
+    ElasticIPAssociate:
+        Type: AWS::EC2::EIPAssociation
+        Properties: 
+            AllocationId: !GetAtt ElasticIP.AllocationId
+            InstanceId: !Ref EC2Instance
 

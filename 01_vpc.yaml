@@ -13,7 +13,7 @@ Parameters:
 
 Resources:
     # **************************************************
-    # VPC 2024/07/28
+    # VPC 2024/07/29
     # **************************************************
     VPC:
         Type: AWS::EC2::VPC
@@ -93,8 +93,8 @@ Resources:
             - IpProtocol: "TCP"
               FromPort: 22
               ToPort: 22
-              CidrIp: 0.0.0.0/0
-              Description: "ssh Outbound"
+              CidrIp: 10.0.0.0/16
+              Description: "ssh Inbound"
             SecurityGroupEgress:
             - IpProtocol: "TCP"
               FromPort: 443
@@ -123,7 +123,7 @@ Resources:
             CreditSpecification:
                 CPUCredits: "standard"
             DisableApiTermination: false
-            # MapPublicIpOnLaunch: false
+            # MapPublicIpOnLaunch: true
             ImageId:
                 !Ref AMI
             InstanceType:
